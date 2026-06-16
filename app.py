@@ -1,5 +1,6 @@
 import streamlit as st
 import pandas as pd
+import re
 
 st.set_page_config(
     page_title="IDRA Research Dashboard",
@@ -8,8 +9,6 @@ st.set_page_config(
 
 st.title("IDRA Research Dashboard")
 
-st.write("Welcome to IDRA Research Dashboard")
-
 uploaded_files = st.file_uploader(
     "Upload IDRA PDF Files",
     type=["pdf"],
@@ -17,10 +16,37 @@ uploaded_files = st.file_uploader(
 )
 
 if uploaded_files:
-    st.success(f"{len(uploaded_files)} file(s) uploaded")
 
-    df = pd.DataFrame({
-        "Filename": [f.name for f in uploaded_files]
-    })
+    records = []
 
-    st.dataframe(df)
+    for file in uploaded_files:
+
+        filename = file.name
+
+        match = re.search(
+            r"(CDT-\d+)\s+(V\d+)",
+            filename,
+            re.IGNORECASE
+        )
+
+        if match:
+            subject = match.group(1)
+            visit = match.group(2)
+        else:
+            subject = ""
+            visit = ""
+
+        records.append({
+            "Subject": subject,
+            "Visit": visit,
+            "Filename": filename
+        })
+
+    df = pd.DataFrame(records)
+
+    st.subheader("Uploaded Files")
+
+    st.dataframe(
+        df,
+        use_container_width=True
+    )
